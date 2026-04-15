@@ -9,8 +9,93 @@ document.addEventListener("DOMContentLoaded", () => {
   const heroBadgeText = document.getElementById("heroBadgeText");
   const heroServiceName = document.getElementById("heroServiceName");
   const heroServiceCopy = document.getElementById("heroServiceCopy");
+  const cookieConsentKey = "vexogen_cookie_consent";
+
+  const persistCookieConsent = (value) => {
+    try {
+      localStorage.setItem(cookieConsentKey, value);
+    } catch (error) {
+      // Ignore storage failures and still try to persist a basic cookie.
+    }
+
+    document.cookie = `vexogen_cookie_consent=${value}; max-age=31536000; path=/; SameSite=Lax`;
+  };
+
+  const getCookieConsent = () => {
+    try {
+      const storedValue = localStorage.getItem(cookieConsentKey);
+      if (storedValue) return storedValue;
+    } catch (error) {
+      // Ignore storage failures and fall back to cookie parsing.
+    }
+
+    const cookieMatch = document.cookie.match(/(?:^|; )vexogen_cookie_consent=([^;]+)/);
+    return cookieMatch ? decodeURIComponent(cookieMatch[1]) : "";
+  };
+
+  const mountCookieBanner = () => {
+    if (getCookieConsent()) return;
+
+    const banner = document.createElement("aside");
+    banner.className = "cookie-banner";
+    banner.setAttribute("role", "dialog");
+    banner.setAttribute("aria-live", "polite");
+    banner.setAttribute("aria-label", "Cookie consent");
+    banner.innerHTML = `
+      <div class="cookie-banner__copy">
+        <strong>Cookies Notice</strong>
+        <p>We use basic cookies to remember your preferences and improve the website experience.</p>
+      </div>
+      <div class="cookie-banner__actions">
+        <button type="button" class="btn-ghost cookie-banner__btn" data-cookie-choice="reject">Reject</button>
+        <button type="button" class="btn-primary cookie-banner__btn" data-cookie-choice="accept">Accept</button>
+      </div>
+    `;
+
+    banner.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-cookie-choice]");
+      if (!button) return;
+
+      const choice = button.dataset.cookieChoice === "accept" ? "accepted" : "rejected";
+      persistCookieConsent(choice);
+      banner.remove();
+    });
+
+    document.body.appendChild(banner);
+  };
+
+  mountCookieBanner();
 
   if (navToggle && navLinks) {
+    const navItems = navLinks.querySelectorAll(".nav-link");
+
+    const getCurrentNavKey = () => {
+      const currentPath = window.location.pathname.split("/").pop() || "index.html";
+
+      if (currentPath === "" || currentPath === "index.html") return "index.html";
+      if (currentPath.startsWith("service-") || currentPath === "services.html") return "services.html";
+      if (currentPath === "about.html") return "about.html";
+      if (currentPath === "industries.html") return "industries.html";
+      if (currentPath === "showcase.html") return "showcase.html";
+      if (currentPath === "process.html") return "process.html";
+      if (currentPath === "contact.html") return "contact.html";
+
+      return currentPath;
+    };
+
+    const currentNavKey = getCurrentNavKey();
+    navItems.forEach((link) => {
+      const href = link.getAttribute("href");
+      const isActive = href === currentNavKey;
+      link.classList.toggle("is-active", isActive);
+
+      if (isActive) {
+        link.setAttribute("aria-current", "page");
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    });
+
     const closeNav = () => {
       navLinks.classList.remove("is-open");
       document.body.classList.remove("nav-open");
