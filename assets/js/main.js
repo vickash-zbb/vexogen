@@ -11,6 +11,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const heroServiceCopy = document.getElementById("heroServiceCopy");
 
   if (navToggle && navLinks) {
+    const closeNav = () => {
+      navLinks.classList.remove("is-open");
+      document.body.classList.remove("nav-open");
+      navToggle.setAttribute("aria-expanded", "false");
+    };
+
     navToggle.addEventListener("click", () => {
       const isOpen = navLinks.classList.toggle("is-open");
       document.body.classList.toggle("nav-open", isOpen);
@@ -19,10 +25,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     navLinks.querySelectorAll("a").forEach((link) => {
       link.addEventListener("click", () => {
-        navLinks.classList.remove("is-open");
-        document.body.classList.remove("nav-open");
-        navToggle.setAttribute("aria-expanded", "false");
+        closeNav();
       });
+    });
+
+    document.addEventListener("click", (event) => {
+      const clickedInsideNav = navLinks.contains(event.target);
+      const clickedToggle = navToggle.contains(event.target);
+      const isOpen = navLinks.classList.contains("is-open");
+
+      if (isOpen && !clickedInsideNav && !clickedToggle) {
+        closeNav();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && navLinks.classList.contains("is-open")) {
+        closeNav();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 820) {
+        closeNav();
+      }
     });
   }
 
