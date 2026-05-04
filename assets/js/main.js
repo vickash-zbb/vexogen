@@ -72,29 +72,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const getCurrentNavKey = () => {
       const currentPath = window.location.pathname.split("/").pop() || "index.html";
 
-      if (currentPath === "" || currentPath === "index.html") return "index.html";
-      if (currentPath.startsWith("service-") || currentPath === "services.html") return "services.html";
-      if (currentPath === "about.html") return "about.html";
-      if (currentPath === "industries.html") return "industries.html";
-      if (currentPath === "showcase.html") return "showcase.html";
-      if (currentPath === "process.html") return "process.html";
-      if (currentPath === "contact.html") return "contact.html";
+      if (currentPath === "" || currentPath === "index.html") {
+        return window.location.hash || "#top";
+      }
 
       return currentPath;
     };
 
-    const currentNavKey = getCurrentNavKey();
-    navItems.forEach((link) => {
-      const href = link.getAttribute("href");
-      const isActive = href === currentNavKey;
-      link.classList.toggle("is-active", isActive);
+    const syncActiveNav = () => {
+      const currentNavKey = getCurrentNavKey();
+      navItems.forEach((link) => {
+        const href = link.getAttribute("href");
+        const isActive = href === currentNavKey;
+        link.classList.toggle("is-active", isActive);
 
-      if (isActive) {
-        link.setAttribute("aria-current", "page");
-      } else {
-        link.removeAttribute("aria-current");
-      }
-    });
+        if (isActive) {
+          link.setAttribute("aria-current", "page");
+        } else {
+          link.removeAttribute("aria-current");
+        }
+      });
+    };
+
+    syncActiveNav();
+    window.addEventListener("hashchange", syncActiveNav);
 
     const closeNav = () => {
       navLinks.classList.remove("is-open");
