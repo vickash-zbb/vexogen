@@ -1,7 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
   const navToggle = document.getElementById("navToggle");
   const navLinks = document.getElementById("navLinks");
-  const revealItems = document.querySelectorAll("[data-reveal]");
+  
+  const splitTextElements = document.querySelectorAll(".split-text, [data-split-text]");
+  splitTextElements.forEach(el => {
+    const text = el.innerText.trim();
+    el.innerHTML = "";
+    const words = text.split(/\s+/);
+    words.forEach((word, index) => {
+      const wordSpan = document.createElement("span");
+      wordSpan.classList.add("word");
+      wordSpan.style.setProperty("--word-index", index);
+      wordSpan.innerHTML = word + (index < words.length - 1 ? "&nbsp;" : "");
+      el.appendChild(wordSpan);
+    });
+  });
+
+  const revealItems = document.querySelectorAll("[data-reveal], .split-text, [data-split-text]");
   const counters = document.querySelectorAll(".counter");
   const serviceTabs = document.querySelectorAll("[data-service-target]");
   const servicePanels = document.querySelectorAll("[data-service-preview]");
@@ -14,10 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const persistCookieConsent = (value) => {
     try {
       localStorage.setItem(cookieConsentKey, value);
-    } catch (error) {
-      // Ignore storage failures and still try to persist a basic cookie.
-    }
-
+    } catch (error) {}
     document.cookie = `vexogen_cookie_consent=${value}; max-age=31536000; path=/; SameSite=Lax`;
   };
 
@@ -25,17 +37,13 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const storedValue = localStorage.getItem(cookieConsentKey);
       if (storedValue) return storedValue;
-    } catch (error) {
-      // Ignore storage failures and fall back to cookie parsing.
-    }
-
+    } catch (error) {}
     const cookieMatch = document.cookie.match(/(?:^|; )vexogen_cookie_consent=([^;]+)/);
     return cookieMatch ? decodeURIComponent(cookieMatch[1]) : "";
   };
 
   const mountCookieBanner = () => {
     if (getCookieConsent()) return;
-
     const banner = document.createElement("aside");
     banner.className = "cookie-banner";
     banner.setAttribute("role", "dialog");
@@ -55,12 +63,10 @@ document.addEventListener("DOMContentLoaded", () => {
     banner.addEventListener("click", (event) => {
       const button = event.target.closest("[data-cookie-choice]");
       if (!button) return;
-
       const choice = button.dataset.cookieChoice === "accept" ? "accepted" : "rejected";
       persistCookieConsent(choice);
       banner.remove();
     });
-
     document.body.appendChild(banner);
   };
 
@@ -71,11 +77,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const getCurrentNavKey = () => {
       const currentPath = window.location.pathname.split("/").pop() || "index.html";
-
       if (currentPath === "" || currentPath === "index.html") {
         return window.location.hash || "#top";
       }
-
       return currentPath;
     };
 
@@ -85,7 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const href = link.getAttribute("href");
         const isActive = href === currentNavKey;
         link.classList.toggle("is-active", isActive);
-
         if (isActive) {
           link.setAttribute("aria-current", "page");
         } else {
@@ -119,7 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const clickedInsideNav = navLinks.contains(event.target);
       const clickedToggle = navToggle.contains(event.target);
       const isOpen = navLinks.classList.contains("is-open");
-
       if (isOpen && !clickedInsideNav && !clickedToggle) {
         closeNav();
       }
@@ -137,6 +139,23 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // Smart header behavior
+  const siteHeader = document.querySelector(".site-header");
+  let lastScrollY = window.scrollY;
+  
+  window.addEventListener("scroll", () => {
+    if (!siteHeader) return;
+    const currentScrollY = window.scrollY;
+    
+    if (currentScrollY > lastScrollY && currentScrollY > 80) {
+      siteHeader.classList.add("is-hidden");
+    } else {
+      siteHeader.classList.remove("is-hidden");
+    }
+    
+    lastScrollY = currentScrollY;
+  }, { passive: true });
 
   const animateCounter = (counter) => {
     if (counter.dataset.done === "true") return;
